@@ -1,0 +1,76 @@
+name: Build and test
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Configure (x64 on Windows)
+        if: runner.os == 'Windows'
+        run: cmake -S . -B build -A x64
+      - name: Configure (Linux)
+        if: runner.os == 'Linux'
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build build --config Release
+      - run: ctest --test-dir build -C Release --output-on-failure
+      - name: Check Windows product metadata and package
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $exe = Get-Item build/Release/cuecheck.exe
+          $meta = $exe.VersionInfo
+          $version = & $exe.FullName --version
+          if ($meta.ProductName -cne 'CueCheck' -or $meta.OriginalFilename -cne 'cuecheck.exe' -or
+              $meta.ProductVersion -notmatch '^\d+\.\d+\.\d+$' -or $version -cne "CueCheck $($meta.ProductVersion)") {
+            throw 'Executable metadata does not match the application.'
+          }
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -cne "v$($meta.ProductVersion)") {
+            throw 'Release tag does not match the executable.'
+          }
+          New-Item -Type Directory dist | Out-Null
+          Copy-Item $exe.FullName dist/cuecheck.exe
+          Copy-Item LICENSE dist/LICENSE.txt
+          $digest = (Get-FileHash dist/cuecheck.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$digest  cuecheck.exe" | Set-Content -Encoding ascii dist/cuecheck.exe.sha256
+      - name: Archive tested Windows executable
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: cuecheck-windows-x64
+          path: dist/
+          if-no-files-found: error
+
+  release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: cuecheck-windows-x64
+          path: dist
+      - name: Publish the tested, unsigned release
+        working-directory: dist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha256sum --check cuecheck.exe.sha256
+          gh release create "$GITHUB_REF_NAME" cuecheck.exe cuecheck.exe.sha256 LICENSE.txt \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --title "CueCheck $GITHUB_REF_NAME" \
+            --notes "Offline Windows x64 SubRip checker: find broken cues, overlaps and readability issues without uploading subtitles. Portable and **unsigned**; no installation required. [Usage and verification](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/README.md) · [Code signing policy](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/SIGNING.md) · [Build run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)"
