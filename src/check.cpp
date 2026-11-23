@@ -42,7 +42,7 @@ std::optional<int> timestamp(View s) {
 }
 struct Interval { int start, end; std::size_t line; };
 std::size_t characters(View s) {
-    std::size_t count = 0;
+    std::size_t count = 0, spaces = 0;
     while (!s.empty()) {
         if (s.front() == '<') {
             auto end = s.substr(0, 4).find('>');
@@ -52,7 +52,12 @@ std::size_t characters(View s) {
                 if (name == "b" || name == "i" || name == "u") { s.remove_prefix(end + 1); continue; }
             }
         }
-        if ((static_cast<unsigned char>(s.front()) & 0xc0) != 0x80) ++count;
+        if (s.front() == ' ' || s.front() == '\t') {
+            if (count) ++spaces;
+        } else if ((static_cast<unsigned char>(s.front()) & 0xc0) != 0x80) {
+            count += spaces + 1;
+            spaces = 0;
+        }
         s.remove_prefix(1);
     }
     return count;

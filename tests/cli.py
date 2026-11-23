@@ -68,6 +68,8 @@ class CliTest(unittest.TestCase):
         file = f"1\n{T}\n<i>字幕</i>\n123"
         self.assertEqual(self.check(file, "--max-cps", "6", "--max-line", "3"), [])
         self.assertEqual(self.check(file, "--max-cps", "5", "--max-line", "2"), [(2, "reading-speed"), (4, "line-length")])
+        self.assertEqual(self.check(f"1\n{T}\n<i> \t</i>", status=1), [(2, "empty-text")])
+        self.assertEqual(self.check(f"1\n{T}\n<i> x y </i>", "--max-line", "3"), [])
 
     def test_numbering_warning_and_severity(self):
         file = self.write(f"42\n{T}\nHi")
