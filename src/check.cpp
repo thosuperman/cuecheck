@@ -50,9 +50,10 @@ bool timing_row(View s, bool after_dialogue = false) {
     if (arrow != View::npos) {
         return clock_shape(trim(s.substr(0, arrow))) || clock_shape(trim(s.substr(arrow + 3)));
     }
-    if (after_dialogue) return false;
-    return clock_shape(s) || (s.size() >= 24 && clock_shape(s.substr(0, 12)) &&
-        clock_shape(s.substr(s.size() - 12)) && s.substr(12, s.size() - 24).find_first_not_of(" \t-=>") == View::npos);
+    if (s.size() < 24) return !after_dialogue && clock_shape(s);
+    if (!clock_shape(s.substr(0, 12)) || !clock_shape(s.substr(s.size() - 12))) return false;
+    auto separator = trim(s.substr(12, s.size() - 24));
+    return (!after_dialogue || !separator.empty()) && separator.find_first_not_of("-=>") == View::npos;
 }
 std::size_t characters(View s) {
     std::size_t count = 0, spaces = 0;
