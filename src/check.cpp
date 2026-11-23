@@ -41,19 +41,18 @@ std::optional<int> timestamp(View s) {
     return ((number(h) * 60 + number(m)) * 60 + number(sec)) * 1000 + number(ms);
 }
 struct Interval { int start, end; std::size_t line; };
-bool clock_token(View s) {
-    return !s.empty() && s.find(':') != View::npos &&
-           s.find_first_not_of("0123456789:,.") == View::npos;
+bool clock_shape(View s) {
+    return s.size() == 12 && s[2] == ':' && s[5] == ':' && (s[8] == ',' || s[8] == '.') &&
+           digits(s.substr(0, 2)) && digits(s.substr(3, 2)) && digits(s.substr(6, 2)) && digits(s.substr(9));
 }
-bool looks_like_range(View s) {
-    const auto arrow = s.find('>');
+bool timing_row(View s, bool after_dialogue = false) {
+    const auto arrow = s.find("-->");
     if (arrow != View::npos) {
-        const auto left = trim(s.substr(0, s.find_first_of("-=>")));
-        return clock_token(left) || clock_token(trim(s.substr(arrow + 1)));
+        return clock_shape(trim(s.substr(0, arrow))) || clock_shape(trim(s.substr(arrow + 3)));
     }
-    const auto gap = s.find_first_of(" \t");
-    return gap != View::npos && clock_token(s.substr(0, gap)) &&
-           clock_token(s.substr(s.find_last_of(" \t") + 1));
+    if (after_dialogue) return false;
+    return clock_shape(s) || (s.size() >= 24 && clock_shape(s.substr(0, 12)) &&
+        clock_shape(s.substr(s.size() - 12)) && s.substr(12, s.size() - 24).find_first_not_of(" \t-=>") == View::npos);
 }
 std::size_t characters(View s) {
     std::size_t count = 0, spaces = 0;
@@ -130,7 +129,7 @@ Report check(View file, Limits limits) {
         }
         s = trim(s);
         if (!pending_number.empty()) {
-            if (looks_like_range(s)) {
+            if (timing_row(s, true)) {
                 finish();
                 ++r.cues;
                 check_number(pending_number, line - 1);
@@ -149,14 +148,14 @@ Report check(View file, Limits limits) {
                 continue;
             }
             error(line, "missing-number", "Start each cue with a numeric index.");
-            if (!looks_like_range(s)) continue;
+            if (!timing_row(s)) continue;
         } else if (state == State::text) {
             if (digits(s)) pending_number = s;
             else add_text(s, line);
             continue;
         }
         state = State::text;
-        if (!looks_like_range(s) && !clock_token(s)) {
+        if (!timing_row(s)) {
             error(timing_line, "missing-timing", "Add a timestamp line after the cue number.");
             add_text(s, line);
             continue;

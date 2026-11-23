@@ -53,7 +53,8 @@ class CliTest(unittest.TestCase):
         self.assertEqual(self.check("\ufeff \r\n", status=1), [(1, "empty-file")])
 
     def test_missing_separator_recovers(self):
-        self.assertEqual(self.check(f"1\n{T}\n123\nParis --> Lyon, France", "--strict"), [])
+        for text in ["Paris --> Lyon, France", "9:00 to 5:00", "9:00 --> 5:00", "00:00:01,000 to 00:00:02,000"]:
+            self.assertEqual(self.check(f"1\n{T}\n123\n{text}", "--strict"), [])
         t2 = "00:00:02,000 --> 00:00:03,000"
         self.assertEqual(self.check(f"1\n{T}\n2\n{t2}\nNext", status=1),
                          [(2, "empty-text"), (3, "missing-separator")])
