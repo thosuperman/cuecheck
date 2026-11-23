@@ -6,7 +6,7 @@
 |---|---|
 | Source owner, reviewer and release approver | [thosuperman](https://github.com/thosuperman), owner of the [official repository](https://github.com/thosuperman/cuecheck). External contributors propose changes by pull request; the maintainer reviews source, tests and workflow changes before release. |
 | Artifact eligible for future signing | Only the project's own Windows x64 `cuecheck.exe` built by GitHub Actions from a reviewed release commit. Never local uploads, third-party tools or builds from forks. |
-| Privacy | The program reads only named local subtitle files, writes diagnostics to the console and transfers no information to other networked systems. |
+| Privacy | The program reads the files you specify and writes diagnostics to the console. It has no telemetry or network client. Explicit Windows UNC and device paths are rejected; use a local disk for offline operation, since your OS may fetch mounted or cloud-backed files. |
 
 ## Publish an unsigned release
 

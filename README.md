@@ -1,6 +1,6 @@
 # CueCheck
 
-CueCheck checks a SubRip (`.srt`) caption file before you deliver a cut. It points to the exact line where a cue ends before it starts, overlaps another speaker or breaks your reading-speed limit. Use it on one export in PowerShell or on a batch in CI. It never rewrites captions, opens a video or connects to the network.
+CueCheck checks a SubRip (`.srt`) caption file before you deliver a cut. It points to the exact line where a cue ends before it starts, overlaps another speaker or breaks your reading-speed limit. Use it on one export in PowerShell or on a batch in CI. It never rewrites captions, opens a video or uploads subtitles. Use local files for offline operation.
 
 ## Try it on Windows
 

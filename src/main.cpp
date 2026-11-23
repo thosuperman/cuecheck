@@ -33,6 +33,12 @@ std::string quoted(const std::string& value) {
 std::string load(const fs::path& path, std::string& data) {
     constexpr std::size_t max_size = 4 * 1024 * 1024;
     std::error_code ec;
+#ifdef _WIN32
+    const auto& name = path.native();
+    auto slash = [](wchar_t c) { return c == L'\\' || c == L'/'; };
+    if (name.size() >= 2 && slash(name[0]) && slash(name[1]))
+        return "UNC and device paths are not supported. Use a local file.";
+#endif
     if (!fs::is_regular_file(path, ec)) return "Not a readable regular file.";
     auto size = fs::file_size(path, ec);
     if (ec) return "Cannot determine the file size.";

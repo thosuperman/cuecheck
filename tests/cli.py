@@ -95,6 +95,12 @@ class CliTest(unittest.TestCase):
         self.assertIn("0 issue(s)", self.call("--", name))
         self.assertEqual(self.check(b" " * (4 * 1024 * 1024 + 1), status=2), [(0, "input")])
 
+    @unittest.skipUnless(sys.platform == "win32", "Windows namespace syntax")
+    def test_windows_namespace_path_is_rejected_before_lookup(self):
+        for name in [r"\\localhost\share\cut.srt", "//localhost/share/cut.srt", r"\\?\C:\cut.srt"]:
+            issue = json.loads(self.call("--json", name, status=2))[0]["issues"][0]
+            self.assertIn("UNC and device paths", issue["message"])
+
 
 if __name__ == "__main__":
     unittest.main()
