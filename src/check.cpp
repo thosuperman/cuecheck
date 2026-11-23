@@ -101,6 +101,7 @@ Report check(View file, Limits limits) {
         chars = duration = 0;
     };
     auto check_number = [&](View s, std::size_t n) {
+        while (s.size() > 1 && s.front() == '0') s.remove_prefix(1);
         if (s != std::to_string(r.cues)) warn(n, "numbering", "Expected cue number " + std::to_string(r.cues) + ".");
     };
     while (!file.empty()) {

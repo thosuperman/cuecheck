@@ -72,6 +72,7 @@ class CliTest(unittest.TestCase):
         self.assertEqual(self.check(f"1\n{T}\n<i> x y </i>", "--max-line", "3"), [])
 
     def test_numbering_warning_and_severity(self):
+        self.assertEqual(self.check(f"001\n{T}\nHi\n\n002\n00:00:02,000 --> 00:00:03,000\nNext", "--strict"), [])
         file = self.write(f"42\n{T}\nHi")
         issue = json.loads(self.call("--json", file))[0]["issues"][0]
         self.assertEqual((issue["severity"], issue["code"]), ("warning", "numbering"))
