@@ -110,7 +110,8 @@ Report check(View file, Limits limits) {
         }
         s = trim(s);
         if (!pending_number.empty()) {
-            if (interval(s, line)) {
+            auto arrow = s.find("-->");
+            if (arrow != View::npos && (s.find(':') != View::npos || s.find(',') != View::npos)) {
                 finish();
                 ++r.cues;
                 check_number(pending_number, line - 1);

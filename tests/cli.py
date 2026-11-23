@@ -53,6 +53,8 @@ class CliTest(unittest.TestCase):
         t2 = "00:00:02,000 --> 00:00:03,000"
         self.assertEqual(self.check(f"1\n{T}\n2\n{t2}\nNext", status=1),
                          [(2, "empty-text"), (3, "missing-separator")])
+        self.assertEqual(self.check(f"1\n{T}\nA\n2\n00:80:10,000 --> 00:00:03,000\nNext", status=1),
+                         [(4, "missing-separator"), (5, "timestamp")])
 
     def test_overlaps_nested_unsorted_and_touching(self):
         def cue(i, a, b):
