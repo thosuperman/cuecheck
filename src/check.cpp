@@ -41,6 +41,20 @@ std::optional<int> timestamp(View s) {
     return ((number(h) * 60 + number(m)) * 60 + number(sec)) * 1000 + number(ms);
 }
 struct Interval { int start, end; std::size_t line; };
+bool clock_token(View s) {
+    return !s.empty() && s.find(':') != View::npos &&
+           s.find_first_not_of("0123456789:,.") == View::npos;
+}
+bool looks_like_range(View s) {
+    const auto arrow = s.find('>');
+    if (arrow != View::npos) {
+        const auto left = trim(s.substr(0, s.find_first_of("-=>")));
+        return clock_token(left) || clock_token(trim(s.substr(arrow + 1)));
+    }
+    const auto gap = s.find_first_of(" \t");
+    return gap != View::npos && clock_token(s.substr(0, gap)) &&
+           clock_token(s.substr(s.find_last_of(" \t") + 1));
+}
 std::size_t characters(View s) {
     std::size_t count = 0, spaces = 0;
     while (!s.empty()) {
@@ -116,8 +130,7 @@ Report check(View file, Limits limits) {
         }
         s = trim(s);
         if (!pending_number.empty()) {
-            auto arrow = s.find("-->");
-            if (arrow != View::npos && (s.find(':') != View::npos || s.find(',') != View::npos)) {
+            if (looks_like_range(s)) {
                 finish();
                 ++r.cues;
                 check_number(pending_number, line - 1);
@@ -136,14 +149,14 @@ Report check(View file, Limits limits) {
                 continue;
             }
             error(line, "missing-number", "Start each cue with a numeric index.");
-            if (s.find("-->") == View::npos) continue;
+            if (!looks_like_range(s)) continue;
         } else if (state == State::text) {
             if (digits(s)) pending_number = s;
             else add_text(s, line);
             continue;
         }
         state = State::text;
-        if (s.find("-->") == View::npos) {
+        if (!looks_like_range(s) && !clock_token(s)) {
             error(timing_line, "missing-timing", "Add a timestamp line after the cue number.");
             add_text(s, line);
             continue;

@@ -46,11 +46,14 @@ class CliTest(unittest.TestCase):
 
     def test_no_index_empty_text_or_truncated_block(self):
         self.assertEqual(self.check("1\nHello", status=1), [(1, "missing-timing")])
+        self.assertEqual(self.check("1\n00:00:01,000 -> 00:00:02,000\nHello", "--max-line", "20", status=1),
+                         [(2, "timestamp")])
         self.assertEqual(self.check(f"{T}\nHi", status=1), [(1, "missing-number")])
         self.assertEqual(self.check(f"1\n{T}\n\n2", status=1), [(2, "empty-text"), (4, "missing-timing")])
         self.assertEqual(self.check("\ufeff \r\n", status=1), [(1, "empty-file")])
 
     def test_missing_separator_recovers(self):
+        self.assertEqual(self.check(f"1\n{T}\n123\nParis --> Lyon, France", "--strict"), [])
         t2 = "00:00:02,000 --> 00:00:03,000"
         self.assertEqual(self.check(f"1\n{T}\n2\n{t2}\nNext", status=1),
                          [(2, "empty-text"), (3, "missing-separator")])
