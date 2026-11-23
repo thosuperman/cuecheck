@@ -28,6 +28,8 @@ In the source tree, try the [rough cut](examples/rough-cut.srt):
 
 Compare with the [clean sample](examples/clean.srt). Overlapping dialogue can be intentional, so overlap is a warning, not an error.
 
+A missing blank line can make a cue number indistinguishable from spoken numbers. To recover, CueCheck treats a digits-only caption line as the next cue number only when followed by a right-pointing timing arrow with a full SubRip-shaped endpoint (both endpoints for a malformed arrow). Other numbers and dash-separated ranges stay dialogue. If a literal caption exactly mimics a numbered timing header, split the caption differently. Recovery is not guaranteed for arbitrary damage.
+
 | Check | What it reports |
 |---|---|
 | Structure | Missing numbers, timestamps, text or blank separators between numbered cues; nonconsecutive numbering |

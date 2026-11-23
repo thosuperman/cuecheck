@@ -53,7 +53,8 @@ bool timing_row(View s, bool after_dialogue = false) {
     if (s.size() < 24) return !after_dialogue && clock_shape(s);
     if (!clock_shape(s.substr(0, 12)) || !clock_shape(s.substr(s.size() - 12))) return false;
     auto separator = trim(s.substr(12, s.size() - 24));
-    return (!after_dialogue || !separator.empty()) && separator.find_first_not_of("-=>") == View::npos;
+    if (separator.find_first_not_of(" \t-=>") != View::npos) return false;
+    return !after_dialogue || (!separator.empty() && separator.back() == '>');
 }
 std::size_t characters(View s) {
     std::size_t count = 0, spaces = 0;
