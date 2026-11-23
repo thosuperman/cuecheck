@@ -142,8 +142,13 @@ Report check(View file, Limits limits) {
             else add_text(s, line);
             continue;
         }
-        timing_line = line;
         state = State::text;
+        if (s.find("-->") == View::npos) {
+            error(timing_line, "missing-timing", "Add a timestamp line after the cue number.");
+            add_text(s, line);
+            continue;
+        }
+        timing_line = line;
         auto t = interval(s, line);
         if (!t) error(line, "timestamp", "Use HH:MM:SS,mmm --> HH:MM:SS,mmm.");
         else if (t->end <= t->start) error(line, "duration", "Set the end time after the start time.");

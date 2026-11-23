@@ -45,6 +45,7 @@ class CliTest(unittest.TestCase):
             self.assertEqual(self.check(f"1\n00:00:01,000 --> {end}\nA", status=1), [(2, "duration")])
 
     def test_no_index_empty_text_or_truncated_block(self):
+        self.assertEqual(self.check("1\nHello", status=1), [(1, "missing-timing")])
         self.assertEqual(self.check(f"{T}\nHi", status=1), [(1, "missing-number")])
         self.assertEqual(self.check(f"1\n{T}\n\n2", status=1), [(2, "empty-text"), (4, "missing-timing")])
         self.assertEqual(self.check("\ufeff \r\n", status=1), [(1, "empty-file")])
